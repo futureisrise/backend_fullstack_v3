@@ -1,0 +1,59 @@
+
+.user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.boosterpacks, .posts {
+    margin: 30px 0;
+}
+.invalid-feedback {
+    display: block;
+}
+.nav-item{
+    list-style: none;
+    margin-right: 15px;
+}
+.modal-body .post-img {
+    margin: 0 auto;
+    height: 500px;
+    width: 500px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.modal-body .card-img-top {
+    width: auto;
+    max-width: none;
+    max-height: 500px;
+}
+#postModal .form-group {
+    flex: 1 0 auto;
+}
+#postModal .form-group input{
+    width: 100%;
+}
+.user .avatar {
+    border-radius: 100%;
+    overflow: hidden;
+    width: 70px;
+    height: 70px;
+}
+.user .avatar img{
+    width: 100%;
+}
+.user .name {
+    margin-left: 20px;
+}
+.likes {
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+.heart-wrap {
+    display: flex;
+    align-items: center;
+}
+.likes .heart{
+    margin-right: 5px;
+}
+

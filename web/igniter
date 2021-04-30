@@ -1,0 +1,5 @@
+#!/usr/bin/env php
+<?php
+define('CLI_IGNITER', TRUE);
+
+include_once __DIR__ . '/public/index.php';

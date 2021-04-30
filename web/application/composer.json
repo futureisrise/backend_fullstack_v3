@@ -1,0 +1,19 @@
+{
+  "name": "futureisrise/php_docker_base",
+  "type": "project",
+  "description": "based on the Shadowigniter framework",
+  "homepage": "https://codeigniter.com",
+  "require-dev": {
+    "symfony/var-dumper": "^5.2",
+    "filp/whoops": "^2.9"
+  },
+  "require": {
+    "ext-json": "*",
+    "ext-redis": "*",
+    "ext-openssl": "*",
+    "ext-iconv": "*",
+    "ext-xmlwriter": "*",
+    "ext-curl": "*",
+    "robmorgan/phinx": "^0.11.1"
+  }
+}
