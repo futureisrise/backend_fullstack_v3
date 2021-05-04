@@ -127,7 +127,7 @@ autoload.php добавить в liblraries 'sparrow_starter' билблиоте
 Конструктор, с параметром `id`, для получения данных из базы. Метод для обновления обьекта, получения данных из базы `->reload()`
 Метод для проверки инициализации обьекта `->is_loaded()`
 
-В функции страться лучше передавать всегда User $user, вместо int $user_id и подобные манипуляции всегда удобнее.
+В функции стараться лучше передавать всегда User $user, вместо int $user_id и подобные манипуляции всегда удобнее.
 
 ```php
 class Application_items extends \System\Emerald\Emerald_model {
@@ -161,7 +161,7 @@ class Application_items extends \System\Emerald\Emerald_model {
     protected $relative;
 ```
 
-Для них пишеться отдельный геттер и сеттер
+Для них пишется отдельный геттер и сеттер
 
 ```php
     /**
@@ -194,16 +194,84 @@ class Application_items extends \System\Emerald\Emerald_model {
 
 Таким образом можем получить все что нам нужно без лишних проблем :)
 
-для указания таблицы в модели используем такую структуру, для получения таблицы используем метод в основном `::get_table_static()`
+Для указания таблицы в модели используем такую структуру, для получения таблицы используем метод в основном `::get_table_static()` или `::CLASS_TABLE`.
 
 Порядок функций в файле:
-1 - Константы и конструктор 2 - Геттеры сеттеры, генерейтеды и в целом связи. 3 - методы работы с обьектом, без статики !
-4 - create, delete 5 - статик методы , любые 6 - препарейшены
+1 - Константы и конструктор 2 - Геттеры сеттеры, генерейтеды и в целом связи. 3 - методы работы с объектом, без статики !
+4 - create, delete 5 - статик методы (выборки, типа get_by_assign_id, get_active_by_user_id и остальные статик методы), 6 - препарейшены.
 
 ```php
 class Multi_model extends \System\Emerald\Emerald_model {
     const CLASS_TABLE = 'multi';
 ```
+
+#### Static transform методы для получения наборов данных
+
+К примеру, нам нужно получить достижение по юзеру и названию, метод выглядеть вот так должен:
+
+```php
+    /**
+     * @param User $user
+     * @param string $name
+     * @return User_achievement
+     */
+    public static function get_by_user_and_name(User $user, string $name): User_achievement
+    {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)
+            ->where(['user_id' => $user->get_id(), 'name' => $name])
+            ->select()
+            ->one());
+    }
+```
+
+Получение активных достижений юзером, с условием - те что в профиле показываются или те что нет.
+
+```php
+    /**
+     * @param User $user
+     * @param bool $only_top_profile
+     * @return User_achievement[]
+     */
+    public static function get_active_by_user(User $user, bool $only_top_profile = FALSE): array
+    {
+
+        $where = ['user_id' => $user->get_id(), 'state' => My_Core::DB_STATE_ACTIVE];
+        if ($only_top_profile)
+        {
+            $where['is_top_profile'] = 1;
+        }
+        return static::transform_many(App::get_s()->from(self::get_table_static())
+            ->where($where)
+            ->order('id', 'DESC')
+            ->select()
+            ->many());
+    }
+```
+
+мы используем `static::transform_many()` и `static::transform_one()` для создания быстрого Emerald моделей. **Обязательно `static` !**
+
+### Emerald_Enum
+
+Волшебные классы с наборами констант. Чаще всего для работы с данными ENUM\SET базы данных. Хранятся на уровне с моделью, в папке enum
+
+```
+application/models/achievement/Achievement_system.php
+application/models/achievement/enum/Achievement_type.php
+```
+
+```php
+namespace Model\Achievement\Enum;
+
+use System\Emerald\Emerald_enum;
+
+class Achievement_type extends Emerald_enum {
+    const COMPLEX = 'complex';
+    const NUMBER = 'number';
+    const SINGLE = 'single';
+}
+```
+
+Появляется возможность использовать методы `get_list` и `has_value` что крайне упрощает жизнь.
 
 ### Application_ модели
 
@@ -272,14 +340,14 @@ public function get_table(): ?string
     }
 ```
 
-и сам препарейшен
+и сам препарейшен. Всегда должен возвращать stdClass , а не массив и тд. Таким образом код становится еще более четкий.
 
 ```php
     /**
      * @param Application_items $data
      * @return stdClass
      */
-    protected static function _preparation_default(Application_items $data)
+    protected static function _preparation_default(Application_items $data):stdClass
     {
         $i = new stdClass();
 
@@ -292,7 +360,22 @@ public function get_table(): ?string
     }
 ```
 
-Если вы хотим пачку обьектов препарировать - используем `::transform_many()` передавая первым параметром массив, а не экземпляр класса :)
+Если вы хотим пачку обьектов препарировать - используем `::preparation_many()` передавая первым параметром массив Emerald, а не экземпляр класса Emerald.
+
+Для удобства навигации в PHPSTORM к примеру, можете сделать пустой метод, который наследуется в классе.
+
+```php
+    /**
+     * @param array $data
+     * @param string $preparation
+     * @param string|null $key
+     * @return array
+     */
+    public static function preparation_many(array $data, string $preparation = 'default', string $key = NULL): array
+    {
+        return parent::preparation_many($data, $preparation, $key);
+    }
+```
 
 ### Transactions
 
