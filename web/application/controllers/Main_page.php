@@ -1,6 +1,7 @@
 <?php
 
 use Model\Boosterpack_model;
+use Model\Login_model;
 use Model\Post_model;
 use Model\User_model;
 
@@ -59,18 +60,40 @@ class Main_page extends MY_Controller
         //TODO логика комментирования поста
     }
 
-
+    /**
+     * Method for login users in our system
+     *
+     * @return object|string|void
+     */
     public function login()
     {
-        //TODO
+        $user_name = $this->input->post("email");
+        $user_password = $this->input->post('password');
 
-        return $this->response_success();
+        if (!$user_password OR !$user_name) {
+            return $this->response_error("Email or Password can't be empty");
+        }
+
+        try {
+            $user = Login_model::login($user_name, $user_password);
+        } catch (Exception $exception) {
+            return $this->response_error($exception->getMessage());
+        }
+
+        return $this->response_success(['user' => $user->get_id()]);
     }
 
 
     public function logout()
     {
-        //TODO
+        if ( ! User_model::is_logged())
+        {
+            $this->go_back();
+        }
+
+        Login_model::logout();
+
+        $this->go_back();
     }
 
     public function add_money(){

@@ -3,10 +3,10 @@ const STATUS_ERROR = 'error';
 var app = new Vue({
 	el: '#app',
 	data: {
-		login: '',
+		email: '',
 		pass: '',
 		post: false,
-		invalidLogin: false,
+		invalidEmail: false,
 		invalidPass: false,
 		invalidSum: false,
 		posts: [],
@@ -15,6 +15,10 @@ var app = new Vue({
 		likes: 0,
 		commentText: '',
 		boosterpacks: [],
+		invalidLoginForm : {
+			message : '',
+			hasError : false
+		}
 	},
 	computed: {
 		test: function () {
@@ -42,30 +46,43 @@ var app = new Vue({
 		},
 		logIn: function () {
 			var self= this;
-			if(self.login === ''){
-				self.invalidLogin = true
+
+			self.invalidEmail = false;
+			self.invalidPass = false;
+			self.invalidLoginForm.hasError = false;
+
+			if(self.email === ''){
+				self.invalidEmail = true
 			}
 			else if(self.pass === ''){
-				self.invalidLogin = false
 				self.invalidPass = true
 			}
 			else{
-				self.invalidLogin = false
-				self.invalidPass = false
-
 				form = new FormData();
-				form.append("login", self.login);
+				form.append("email", self.email);
 				form.append("password", self.pass);
 
-				axios.post('/main_page/login', form)
-					.then(function (response) {
-						if(response.data.user) {
-							location.reload();
-						}
-						setTimeout(function () {
-							$('#loginModal').modal('hide');
-						}, 500);
-					})
+                axios.get("csrf/get_token").then((response) => {
+                    if (response.data.status !== "success") {
+                        return;
+                    }
+                    form.append('csrf_token', response.data.token);
+                    axios.post('/main_page/login', form)
+                        .then(function (response) {
+                            if (response.data.user) {
+                                location.reload();
+                                return;
+                            }
+                            if (response.data.status !== "success") {
+								self.invalidLoginForm.message = response.data.error_message;
+								self.invalidLoginForm.hasError = true;
+							} else {
+								setTimeout(function () {
+									$('#loginModal').modal('hide');
+								}, 500);
+							}
+                        })
+                })
 			}
 		},
 		addComment: function(id) {
@@ -129,15 +146,24 @@ var app = new Vue({
 			var self= this;
 			var pack = new FormData();
 			pack.append('id', id);
-			axios.post('/main_page/buy_boosterpack', pack)
-				.then(function (response) {
-					self.amount = response.data.amount
-					if(self.amount !== 0){
-						setTimeout(function () {
-							$('#amountModal').modal('show');
-						}, 500);
-					}
-				})
+
+			axios.get("csrf/get_token").then((response) => {
+				if (response.data.status !== "success") {
+					return;
+				}
+				pack.append('csrf_token', response.data.token);
+				axios.post('/main_page/buy_boosterpack', pack)
+					.then(function (response) {
+						self.amount = response.data.amount
+						if(self.amount !== 0){
+							setTimeout(function () {
+								$('#amountModal').modal('show');
+							}, 500);
+						}
+					});
+			});
+
+
 		}
 	}
 });

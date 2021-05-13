@@ -24,8 +24,10 @@ services:
         restart: always
         environment:
             PHP_INI_SCAN_DIR: "/usr/local/etc/php/custom.d:/usr/local/etc/php/conf.d"
+            XDEBUG_SESSION: "PHPSTORM"
         volumes:
             - "./etc/php/php.ini:/usr/local/etc/php/custom.d"
+            - "./etc/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.custom.ini"
             - "./web:/var/www/html"
         working_dir: "/var/www/html"
     myadmin:

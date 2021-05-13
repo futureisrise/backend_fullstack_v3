@@ -12,4 +12,12 @@ class MY_Controller extends CI_Controller
     {
 
     }
+
+    public function go_back()
+    {
+        $url = App::get_ci()->agent->referer ?? "/";
+
+        header("Location: {$url}");
+        exit();
+    }
 }

@@ -105,54 +105,12 @@ use Model\User_model;
           </div>
         </div>
       </div>
-      If You need some help about core - read README.MD in system folder
-      <br>
-      What we have done All posts: <a href="/main_page/get_all_posts">/main_page/get_all_posts</a> One post: <a
-          href="/main_page/get_post/1">/main_page/get_post/1</a>
-      <br>
-      Just go coding Login: <a href="/main_page/login">/main_page/login</a> Make boosterpack feature <a
-          href="/main_page/buy_boosterpack">/main_page/buy_boosterpack</a> Add money feature <a
-          href="/main_page/add_money">/main_page/add_money</a>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-       aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Log in</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <div class="form-group">
-              <label for="exampleInputEmail1">Please enter login</label>
-              <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" v-model="login" required>
-              <div class="invalid-feedback" v-if="invalidLogin">
-                Please write a username.
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="exampleInputPassword1">Please enter password</label>
-              <input type="password" class="form-control" id="inputPassword" v-model="pass" required>
-              <div class="invalid-feedback" v-show="invalidPass">
-                Please write a password.
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button class="btn btn-primary" @click.prevent="logIn">Login</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Modal -->
+    <!-- Modal -->
+    <?php require_once "modals/login.php"?>
+    <!-- Modal -->
   <div class="modal fade bd-example-modal-xl" id="postModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
        aria-hidden="true" v-if="post">
     <div class="modal-dialog modal-xl" role="document">

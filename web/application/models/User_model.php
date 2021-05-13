@@ -3,7 +3,6 @@
 namespace Model;
 use App;
 use Exception;
-use http\Client\Curl\User;
 use stdClass;
 use System\Emerald\Emerald_model;
 
@@ -344,9 +343,18 @@ class User_model extends Emerald_model {
      *
      * @return User_model
      */
-    public static function find_user_by_email(string $email): User_model
+    public static function find_user_by_email(string $email): ?User_model
     {
-        //TODO
+        $result = App::get_s()->from(self::CLASS_TABLE)
+            ->where(['email' => $email])
+            ->select()
+            ->one();
+
+        if (!$result) {
+            return null;
+        }
+
+        return self::transform_one($result);
     }
 
     /**

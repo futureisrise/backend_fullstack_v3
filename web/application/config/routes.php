@@ -56,9 +56,9 @@ $route['404_override'] = 'api/error_404';
 $route['404'] = 'api/error_404';
 $route['error'] = 'api/error';
 
-
-
 $route['translate_uri_dashes'] = FALSE;
+
+$route['csrf/get_token'] = "csrf/get_token";
 
 //Localization routification
 
