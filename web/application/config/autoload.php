@@ -58,7 +58,7 @@ $autoload['packages'] = [];
 |
 |	$autoload['libraries'] = array('user_agent' => 'ua');
 */
-$autoload['libraries'] = ['session', 'sparrow_starter'];
+$autoload['libraries'] = ['session', 'sparrow_starter', 'MY_Core'];
 
 /*
 | -------------------------------------------------------------------

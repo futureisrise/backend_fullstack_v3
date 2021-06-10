@@ -26,8 +26,14 @@ class Login_model extends CI_Model {
     public static function login(): User_model
     {
         //TODO
+        $user = User_model::find_user_by_email(App::get_ci()->input->post('login'));
 
-        self::start_session();
+        if (!(strcmp($user->get_password(), trim(App::get_ci()->input->post('password'))))) {
+            self::start_session($user->get_id());
+            return $user;
+        } else {
+            throw new Exception('no_user_found');
+        }
     }
 
     public static function start_session(int $user_id)

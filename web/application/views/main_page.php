@@ -28,7 +28,7 @@ use Model\User_model;
         <li class="nav-item">
             <? if (User_model::is_logged()) {?>
               <a href="/main_page/logout" class="btn btn-primary my-2 my-sm-0"
-                 data-target="#loginModal">Log out, <?= $user->personaname?>
+                 data-target="#loginModal" @click.prevent="logout">Log out, <?= $user->personaname?>
               </a>
             <? } else {?>
               <button type="button" class="btn btn-success my-2 my-sm-0" type="submit" data-toggle="modal"
@@ -46,7 +46,7 @@ use Model\User_model;
         <li class="nav-item">
             <?  if (User_model::is_logged()) {?>
                 <a href="" role="button">
-                    Likes:
+                    Likes: <?= $user->likes?>
                 </a>
             <? }?>
         </li>
@@ -113,6 +113,9 @@ use Model\User_model;
       Just go coding Login: <a href="/main_page/login">/main_page/login</a> Make boosterpack feature <a
           href="/main_page/buy_boosterpack">/main_page/buy_boosterpack</a> Add money feature <a
           href="/main_page/add_money">/main_page/add_money</a>
+      <br>
+      Add a comment: <a href="/main_page/comment">/main_page/comment</a> Like a comment: <a href="/main_page/like_comment/53243243">/main_page/like_comment/</a><br>
+      Like a post: <a href="/main_page/like_post/53243243">/main_page/like_post/</a>
     </div>
   </div>
 
@@ -262,6 +265,26 @@ use Model\User_model;
       </div>
     </div>
   </div>
+  <div class="modal fade" id="amountModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Amount</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h2 class="text-center">Likes: {{amount}}</h2>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
 </div>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"

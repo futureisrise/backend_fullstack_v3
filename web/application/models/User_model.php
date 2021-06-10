@@ -268,6 +268,19 @@ class User_model extends Emerald_model {
     public function add_money(float $sum): bool
     {
         //TODO добавление денег
+        $sum = App::get_s()->quote($sum);
+        $walletSum = $this->get_wallet_balance() + $sum;
+        $walletTotalSum = $this->get_wallet_total_refilled() + $sum;
+
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update(['wallet_balance' => $walletSum, 'wallet_total_refilled' => $walletTotalSum])
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -282,7 +295,15 @@ class User_model extends Emerald_model {
     public function remove_money(float $sum): bool
     {
         //TODO списание денег
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum)))
+            ->execute();
 
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
         return TRUE;
     }
 
@@ -347,6 +368,7 @@ class User_model extends Emerald_model {
     public static function find_user_by_email(string $email): User_model
     {
         //TODO
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['email' => $email])->one());
     }
 
     /**
@@ -420,6 +442,7 @@ class User_model extends Emerald_model {
 
         $o->personaname = $data->get_personaname();
         $o->avatarfull = $data->get_avatarfull();
+        $o->likes = $data->get_likes_balance();
 
         $o->time_created = $data->get_time_created();
         $o->time_updated = $data->get_time_updated();
@@ -445,6 +468,7 @@ class User_model extends Emerald_model {
 
             $o->personaname = $data->get_personaname();
             $o->avatarfull = $data->get_avatarfull();
+            $o->likes = $data->get_likes_balance();
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();

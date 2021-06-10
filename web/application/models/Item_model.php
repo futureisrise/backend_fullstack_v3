@@ -88,4 +88,13 @@ class Item_model extends Emerald_model {
 
         return App::get_s()->is_affected();
     }
+
+    public static function get_all_by_max_price(string $maxPrice): array
+    {
+        return static::transform_many(App::get_s()
+            ->from(self::CLASS_TABLE)
+            ->where('price < ', $maxPrice)
+            ->many()
+        );
+    }
 }

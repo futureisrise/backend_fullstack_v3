@@ -135,6 +135,7 @@ class Boosterpack_model extends Emerald_model
     public function get_boosterpack_info(): array
     {
         //TODO
+        return Boosterpack_info_model::get_by_boosterpack_id($this->get_id());
     }
 
     function __construct($id = NULL)
@@ -174,6 +175,31 @@ class Boosterpack_model extends Emerald_model
     public function open(): int
     {
         //TODO
+        $user = User_model::get_user();
+        $maxPrice = $this->get_bank() + ($this->get_price() - $this->get_us());
+        $contains = $this->get_contains($maxPrice);
+
+        if (empty($contains)) {
+            throw new Exception('Error on open boosterpack');
+        }
+
+        shuffle($contains);
+        $randomKey = array_rand($contains, 1);
+
+        if (!is_numeric($randomKey)) {
+          throw new Exception('Error on open boosterpack');
+        }
+
+        $randomItem = $contains[$randomKey];
+        $newBank = $maxPrice - $randomItem->get_price();
+        // меняем профитбанк бустерпаку
+        $this->set_bank($newBank > 0 ? $newBank : 0);
+
+        $user->set_likes_balance($user->get_likes_balance() + $randomItem->get_price());// меняем кол-во лайков у пользователя
+        $user->remove_money($this->get_price());// уменьшаем баланс пользователя на стоимость бустерпака
+        $user->set_wallet_total_withdrawn($user->get_wallet_total_withdrawn() + $this->get_price());// увеличиваем у пользователя сумму потраченных денег на бустерпаки
+
+        return $randomItem->get_price();
     }
 
     /**
@@ -184,6 +210,16 @@ class Boosterpack_model extends Emerald_model
     public function get_contains(int $max_available_likes): array
     {
         //TODO
+        return Item_model::get_all_by_max_price($max_available_likes);
+    }
+
+    /**
+     * @param int $id
+     * @return Boosterpack_model
+     */
+    public static function get_one(int $id):Boosterpack_model
+    {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['id' => $id])->one());
     }
 
 
@@ -230,5 +266,14 @@ class Boosterpack_model extends Emerald_model
     private static function _preparation_contains(Boosterpack_model $data): stdClass
     {
         //TODO
+
+        $o = new stdClass();
+
+        $o->id = $data->get_id();
+        $o->price = $data->get_price();
+
+        $o->contains = Boosterpack_model::preparation_many($data->get_contains($data->get_price()));
+
+        return $o;
     }
 }

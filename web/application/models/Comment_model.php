@@ -238,6 +238,25 @@ class Comment_model extends Emerald_Model {
     }
 
     /**
+     * @param int $assign_id
+     * @return self[]
+     * @throws Exception
+     */
+    public static function get_all_by_assign_id_and_reply_is_null(int $assign_id): array
+    {
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id, 'reply_id' => null])->orderBy('time_created', 'ASC')->many());
+    }
+
+    /**
+     * @param int $id
+     * @return Comment_model
+     */
+    public static function get_one(int $id):Comment_model
+    {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['id' => $id])->one());
+    }
+
+    /**
      * @param User_model $user
      *
      * @return bool
@@ -246,11 +265,22 @@ class Comment_model extends Emerald_Model {
     public function increment_likes(User_model $user): bool
     {
         //TODO
+        if ($user->get_likes_balance() > 0) {
+            $this->is_loaded(TRUE);
+            App::get_s()->from(self::CLASS_TABLE)
+                ->where(['id' => $this->get_id()])
+                ->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+                ->execute();
+            return App::get_s()->is_affected();
+        }
+
+        return false;
     }
 
     public static function get_all_by_replay_id(int $reply_id)
     {
         //TODO
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['reply_id' => $reply_id])->orderBy('time_created', 'ASC')->many());
     }
 
     /**
@@ -283,6 +313,7 @@ class Comment_model extends Emerald_Model {
         $o->text = $data->get_text();
 
         $o->user = User_model::preparation($data->get_user(), 'main_page');
+        $o->comments = Comment_model::preparation_many(self::get_all_by_replay_id($o->id),'default');
 
         $o->likes = $data->get_likes();
 
