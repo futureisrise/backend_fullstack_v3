@@ -80,7 +80,7 @@ var app = new Vue({
 					'/main_page/comment',
 					comment
 				).then(function () {
-
+					self.openPost(id);
 				});
 			}
 
@@ -135,6 +135,18 @@ var app = new Vue({
 					if(self.amount !== 0){
 						setTimeout(function () {
 							$('#amountModal').modal('show');
+						}, 500);
+					}
+				})
+		},
+		getDepositAndSpent: function (id) {
+			var self= this;
+			axios.get('/main_page/get_deposit_and_spent')
+				.then(function (response) {
+					console.log(response);
+					self.amount = response.data.amount
+					if(self.amount !== 0){
+						setTimeout(function () {
 						}, 500);
 					}
 				})

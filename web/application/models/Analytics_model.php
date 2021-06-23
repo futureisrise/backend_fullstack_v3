@@ -178,7 +178,7 @@ class Analytics_model extends Emerald_Model
         return App::get_s()->is_affected();
     }
 
-    public function get_analytics_for_user(int $user_id): array
+    public static function get_analytics_for_user(int $user_id): array
     {
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['user_id' => $user_id])->orderBy('time_created', 'ASC')->many());
     }

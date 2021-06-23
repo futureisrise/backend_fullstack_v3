@@ -268,6 +268,20 @@ class User_model extends Emerald_model {
     public function add_money(float $sum): bool
     {
         //TODO добавление денег
+        $sum = App::get_s()->quote($sum);
+
+        $wallet = $this->get_wallet_balance() + $sum;
+        $walletTotal = $this->get_wallet_total_refilled() + $sum;
+
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update(['wallet_balance' => $wallet, 'wallet_total_refilled' => $walletTotal])
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -282,6 +296,15 @@ class User_model extends Emerald_model {
     public function remove_money(float $sum): bool
     {
         //TODO списание денег
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('wallet_balance = wallet_balance - %s', App::get_s()->quote($sum)))
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
 
         return TRUE;
     }
@@ -347,6 +370,7 @@ class User_model extends Emerald_model {
     public static function find_user_by_email(string $email): User_model
     {
         //TODO
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['email' => $email])->one());
     }
 
     /**
@@ -418,6 +442,8 @@ class User_model extends Emerald_model {
 
         $o->id = $data->get_id();
 
+        $o->likes = $data->get_likes_balance();
+        $o->balance = $data->get_wallet_balance();
         $o->personaname = $data->get_personaname();
         $o->avatarfull = $data->get_avatarfull();
 
@@ -443,6 +469,8 @@ class User_model extends Emerald_model {
         } else {
             $o->id = $data->get_id();
 
+            $o->likes = $data->get_likes_balance();
+            $o->balance = $data->get_wallet_balance();
             $o->personaname = $data->get_personaname();
             $o->avatarfull = $data->get_avatarfull();
 

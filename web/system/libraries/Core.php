@@ -36,6 +36,9 @@ class Core {
     const RESPONSE_GENERIC_NO_DATA = 'no_data'; // нет данных по данному запросу . Пусто или че ? тоже самое что и сверху
     const RESPONSE_GENERIC_SHOULD_WAIT = 'should_wait'; // Действие с задержкой - повторный запрос отправить позже
 
+    const RESPONSE_GENERIC_LIKES_IS_NOT_ENOUGH = 'likes_is_not_enough'; // Не хватает лайков
+    const RESPONSE_GENERIC_MONEY_IS_NOT_ENOUGH = 'money_is_not_enough'; // Не хватает денег
+
     const WEEK_DAYS = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
 
 
