@@ -3,6 +3,9 @@
 use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
+use Model\Login_model;
+use Model\Comment_model;
+use Model\Analytics_model;
 
 /**
  * Created by PhpStorm.
@@ -27,7 +30,6 @@ class Main_page extends MY_Controller
     public function index()
     {
         $user = User_model::get_user();
-
         App::get_ci()->load->view('main_page', ['user' => User_model::preparation($user, 'default')]);
     }
 
@@ -44,10 +46,9 @@ class Main_page extends MY_Controller
     }
 
     public function get_post(int $post_id){
-
-        //TODO получения поста по id
+        $post = Post_model::get_post($post_id);
+        return $this->response_success(['post' =>  Post_model::preparation($post, 'full_info')]);
     }
-
 
     public function comment(){
 
@@ -56,21 +57,45 @@ class Main_page extends MY_Controller
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
 
-        //TODO логика комментирования поста
+        if($this->input->post('commentText') !== ''){
+            $replyId = $this->input->post('replyId');
+            $data = array(
+                'user_id' => User_model::get_session_id(),
+                'assign_id' =>  $this->input->post('postId'),
+                'reply_id' =>  (!$replyId == '' and $replyId > 0) ? $replyId : null,
+                'text' =>  $this->input->post('commentText'),
+                'likes' =>  0,
+            );
+
+            $comment_id = Comment_model::create($data);
+
+            $comment = Comment_model::get_comment_by_id($comment_id);
+
+            return $this->response_success(['comment' =>  Comment_model::preparation($comment)] );
+        }else{
+            return $this->response_error('Comment text empty');
+        }
+
     }
 
 
     public function login()
     {
-        //TODO
+        if(User_model::is_logged()){
+            $this->load->helper('url');
+            redirect('/');
+        }
 
-        return $this->response_success();
+        $data = Login_model::login();
+        return $this->response_success($data);
     }
 
 
     public function logout()
     {
-        //TODO
+        Login_model::logout();
+
+        redirect('/');
     }
 
     public function add_money(){
@@ -81,7 +106,9 @@ class Main_page extends MY_Controller
 
         $sum = (float)App::get_ci()->input->post('sum');
 
-        //TODO логика добавления денег
+        $add = new User_model(User_model::get_session_id());
+
+        $add->add_money($sum);
     }
 
     public function buy_boosterpack()
@@ -91,8 +118,12 @@ class Main_page extends MY_Controller
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
+        $this->load->helper('array');
 
-        //TODO логика покупки и открытия бустерпака по алгоритмку профитбанк, как описано в ТЗ
+        $pack_id = (float)App::get_ci()->input->post('id');
+
+        return $this->response_success(['amount' => boosterpack_model::buy_boosterpack($pack_id)]);
+
     }
 
 
@@ -107,8 +138,10 @@ class Main_page extends MY_Controller
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
+        $user = User_model::get_user();
+        $comment= new Comment_model($comment_id);
 
-        //TODO логика like comment(remove like у юзерa, добавить лай к комменту)
+        return $this->response_success(['msg' => $comment->increment_likes($user)]);
     }
 
     /**
@@ -123,10 +156,28 @@ class Main_page extends MY_Controller
         {
             return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
         }
+        $user = User_model::get_user();
+        $post = new Post_model($post_id);
 
-        //TODO логика like post(remove like у юзерa, добавить лай к посту)
+        return $this->response_success(['msg' => $post->increment_likes($user)]);
     }
 
+    /**
+     * @return object|string|void
+     */
+    public function get_history()
+    {
+        // Check user is authorize
+        if ( ! User_model::is_logged())
+        {
+            return $this->response_error(System\Libraries\Core::RESPONSE_GENERIC_NEED_AUTH);
+        }
+
+        $analytics = Analytics_model::get_analytics_for_user(User_model::get_session_id());
+        $user_balance = User_model::preparation(User_model::get_user(),'balance_show');
+
+        return $this->response_success(['history' => Analytics_model::preparation_many($analytics), 'user_balance' => $user_balance]);
+    }
 
     /**
      * @return object|string|void
@@ -140,6 +191,6 @@ class Main_page extends MY_Controller
         }
 
 
-        //TODO получить содержимое бустерпак
+
     }
 }

@@ -156,6 +156,19 @@ class Boosterpack_model extends Emerald_model
         return new static(App::get_s()->get_insert_id());
     }
 
+	public function update_bank(float $bank)
+	{
+		if($bank < 0) $bank = 0;
+
+		App::get_s()->from(self::CLASS_TABLE)->where(['id' => $this->get_id()])->update(sprintf('bank =  %s', $bank))->execute();
+
+		if ( ! App::get_s()->is_affected())
+		{
+			return FALSE;
+		}
+		return TRUE;
+	}
+
     public function delete():bool
     {
         $this->is_loaded(TRUE);
@@ -168,12 +181,74 @@ class Boosterpack_model extends Emerald_model
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public static function get_boosterpack(int $post_id)
+	{
+		return App::get_s()->from(self::CLASS_TABLE)->where('id',  $post_id)->one();
+	}
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public static function buy_boosterpack(int $pack_id)
+	{
+
+		$boosterpack = Boosterpack_model::get_boosterpack($pack_id);
+
+		$max_available_likes = $boosterpack['bank'] + ($boosterpack['price'] - $boosterpack['us']);
+		$items = Boosterpack_model::get_contains($max_available_likes);
+
+		$result = random_element($items);
+
+		$profit_bank = $boosterpack['bank'] + $boosterpack['price'] - $boosterpack['us'] - $result['price'];
+		$boosterpack_info_data = array(
+			'boosterpack_id' => $boosterpack['id'],
+			'item_id' => $result['id']
+		);
+
+
+		$user = new User_model(User_model::get_session_id());
+
+		App::get_s()->set_transaction_repeatable_read()->execute();
+		App::get_s()->start_trans()->execute();
+
+		$remove = $user->remove_money($boosterpack['price']);
+		$increment_like = $user->increment_likes($result['price']);
+		$update_bank = (new self($pack_id))->update_bank($profit_bank);
+
+		$object_id = Boosterpack_info_model::create($boosterpack_info_data);
+		$analytics = array(
+			'user_id'   => User_model::get_session_id(),
+			'object'    => 'boosterpack',
+			'action'    => 'buy',
+			'object_id' => $object_id,
+			'amount'    => $boosterpack['price']
+		);
+
+		Analytics_model::create($analytics);
+
+		if($remove && $increment_like && $update_bank){
+
+			App::get_s()->commit()->execute();
+
+			return $result['price'];
+		}
+		else{
+			App::get_s()->rollback()->execute();
+			return false;
+		}
+
+	}
+
     /**
      * @return int
      */
     public function open(): int
     {
-        //TODO
+
     }
 
     /**
@@ -181,10 +256,11 @@ class Boosterpack_model extends Emerald_model
      *
      * @return Item_model[]
      */
-    public function get_contains(int $max_available_likes): array
+    public static function get_contains(int $max_available_likes): array
     {
-        //TODO
+        return Item_model::get_by_max_available_likes($max_available_likes);
     }
+
 
 
     /**

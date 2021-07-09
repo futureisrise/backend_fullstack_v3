@@ -88,4 +88,14 @@ class Item_model extends Emerald_model {
 
         return App::get_s()->is_affected();
     }
+
+	/**
+	 * @param int $max_available_likes
+	 * @return self[]
+	 * @throws Exception
+	 */
+	public static function get_by_max_available_likes(int $max_available_likes)
+	{
+		return App::get_s()->from(self::CLASS_TABLE)->where(sprintf('price <=  %s', $max_available_likes))->many();
+	}
 }

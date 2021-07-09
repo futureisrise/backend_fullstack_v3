@@ -102,8 +102,7 @@ class Boosterpack_info_model extends Emerald_model {
     public static function create(array $data)
     {
         App::get_s()->from(self::CLASS_TABLE)->insert($data)->execute();
-
-        return new static(App::get_s()->get_insert_id());
+        return App::get_s()->get_insert_id();
     }
 
     public function delete(): bool

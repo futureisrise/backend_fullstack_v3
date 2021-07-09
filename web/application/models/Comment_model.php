@@ -175,8 +175,16 @@ class Comment_model extends Emerald_Model {
      */
     public function get_comments()
     {
-        return $this->comments;
-    }
+		return $this->comments;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public static function get_comment_by_id($comment_id):Comment_model
+	{
+		return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['id' => $comment_id])->one());
+	}
 
     /////////// GENERATED
 
@@ -217,7 +225,7 @@ class Comment_model extends Emerald_Model {
     public static function create(array $data)
     {
         App::get_s()->from(self::CLASS_TABLE)->insert($data)->execute();
-        return new static(App::get_s()->get_insert_id());
+        return App::get_s()->get_insert_id();
     }
 
     public function delete(): bool
@@ -234,7 +242,7 @@ class Comment_model extends Emerald_Model {
      */
     public static function get_all_by_assign_id(int $assign_id): array
     {
-        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id])->orderBy('time_created', 'ASC')->many());
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['assign_id' => $assign_id, 'reply_id' => null])->orderBy('time_created', 'ASC')->many());
     }
 
     /**
@@ -245,13 +253,31 @@ class Comment_model extends Emerald_Model {
      */
     public function increment_likes(User_model $user): bool
     {
-        //TODO
-    }
+		if($user->likes_check() && $user->decrement_likes()){
+			App::get_s()->from(self::get_table())
+				->where(['id' => $this->get_id()])
+				->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+				->execute();
 
-    public static function get_all_by_replay_id(int $reply_id)
-    {
-        //TODO
+			if ( ! App::get_s()->is_affected())
+			{
+				return FALSE;
+			}
+			return TRUE;
+
+		}
+
+		return FALSE;
     }
+	/**
+	 * @param int $reply_id
+	 * @return self[]
+	 * @throws Exception
+	 */
+    public static function get_all_by_replay_id(int $reply_id): array
+    {
+		return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['reply_id' => $reply_id])->orderBy('time_created', 'ASC')->many());
+	}
 
     /**
      * @param self $data
@@ -283,6 +309,7 @@ class Comment_model extends Emerald_Model {
         $o->text = $data->get_text();
 
         $o->user = User_model::preparation($data->get_user(), 'main_page');
+        $o->reply = Comment_model::preparation_many($data->get_all_by_replay_id($data->get_id()));
 
         $o->likes = $data->get_likes();
 

@@ -2,6 +2,8 @@
 namespace Model;
 use App;
 use System\Emerald\Emerald_model;
+use Exception;
+use stdClass;
 
 class Analytics_model extends Emerald_Model
 {
@@ -60,9 +62,9 @@ class Analytics_model extends Emerald_Model
     }
 
     /**
-     * @return Int
+     * @return string
      */
-    public function get_action():int
+    public function get_action():string
     {
         return $this->action;
     }
@@ -178,9 +180,45 @@ class Analytics_model extends Emerald_Model
         return App::get_s()->is_affected();
     }
 
-    public function get_analytics_for_user(int $user_id): array
+    public static function get_analytics_for_user(int $user_id): array
     {
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['user_id' => $user_id])->orderBy('time_created', 'ASC')->many());
     }
+
+	/**
+	 * @param Analytics_model|Analytics_model[] $data
+	 * @param string $preparation
+	 * @return stdClass
+	 * @throws Exception
+	 */
+	public static function preparation(Analytics_model $data, $preparation = 'default'):stdClass
+	{
+		switch ($preparation)
+		{
+			case 'default':
+				return self::_preparation_default($data);
+			default:
+				throw new Exception('undefined preparation type');
+		}
+	}
+
+	/**
+	 * @param Analytics_model $data
+	 * @return stdClass
+	 */
+	private static function _preparation_default(Analytics_model  $data):stdClass
+	{
+		$o = new stdClass();
+
+		$o->id = $data->get_id();
+		$o->object = $data->get_object();
+		$o->action = $data->get_action();
+		$o->amount = $data->get_amount();
+
+		$o->time_created = $data->get_time_created();
+		$o->time_updated = $data->get_time_updated();
+
+		return $o;
+	}
 
 }

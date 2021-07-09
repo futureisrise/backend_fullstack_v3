@@ -267,9 +267,32 @@ class User_model extends Emerald_model {
      */
     public function add_money(float $sum): bool
     {
-        //TODO добавление денег
+    	if(is_float($sum) && $sum > 0){
+			App::get_s()->set_transaction_repeatable_read()->execute();
+			App::get_s()->start_trans()->execute();
 
-        return TRUE;
+			$analytics = array(
+				'user_id'   => $this->get_id(),
+				'object'    => 'wallet',
+				'action'    => 'add',
+				'amount'    => $sum
+			);
+
+			Analytics_model::create($analytics);
+
+			App::get_s()->sql(sprintf('UPDATE %s SET wallet_balance = wallet_balance + %f, wallet_total_refilled = wallet_total_refilled + %f  WHERE id = %d', self::get_table(), $sum, $sum, $this->get_id()))->execute();
+
+			if(App::get_s()->is_affected()){
+				App::get_s()->commit()->execute();
+			}
+			else{
+				App::get_s()->rollback()->execute();
+			}
+
+			return App::get_s()->is_affected();
+		}
+
+        return FALSE;
     }
 
 
@@ -281,9 +304,19 @@ class User_model extends Emerald_model {
      */
     public function remove_money(float $sum): bool
     {
-        //TODO списание денег
+		if($this->data['wallet_balance'] >= $sum ){
+			$wallet_balance = $this->get_wallet_balance() - $sum;
+			$this->set_wallet_balance($wallet_balance);
+			$this->set_wallet_total_withdrawn($this->get_wallet_total_withdrawn() + $sum);
 
-        return TRUE;
+			if ( ! App::get_s()->is_affected())
+			{
+				return FALSE;
+			}
+			return TRUE;
+
+		}
+		return FALSE;
     }
 
     /**
@@ -292,18 +325,50 @@ class User_model extends Emerald_model {
      */
     public function decrement_likes(): bool
     {
-        App::get_s()->from(self::get_table())
-            ->where(['id' => $this->get_id()])
-            ->update(sprintf('likes_balance = likes_balance - %s', App::get_s()->quote(1)))
-            ->execute();
+		App::get_s()->from(self::get_table())
+			->where(['id' => $this->get_id()])
+			->update(sprintf('likes_balance = likes_balance - %s', App::get_s()->quote(1)))
+			->execute();
 
-        if ( ! App::get_s()->is_affected())
-        {
-            return FALSE;
-        }
+		if ( ! App::get_s()->is_affected())
+		{
+			return FALSE;
+		}
+		return TRUE;
 
-        return TRUE;
     }
+
+	/**
+	 * @return bool
+	 * @throws Exception
+	 */
+	public function increment_likes($likes): bool
+	{
+		App::get_s()->from(self::get_table())
+			->where(['id' => $this->get_id()])
+			->update(sprintf('likes_balance = likes_balance + %s', App::get_s()->quote($likes)))
+			->execute();
+
+		if ( ! App::get_s()->is_affected())
+		{
+			return FALSE;
+		}
+		return TRUE;
+
+	}
+
+	/**
+	 * @return bool
+	 * @throws Exception
+	 */
+	public function likes_check(): bool
+	{
+		$userInfo = App::get_s()->from(self::CLASS_TABLE)->where('id', 1)->select('likes_balance')->one();
+		if ($userInfo['likes_balance'] > 0) {
+			return TRUE;
+		}
+		return FALSE;
+	}
 
     /**
      * @param array $data
@@ -342,11 +407,11 @@ class User_model extends Emerald_model {
     /**
      * @param string $email
      *
-     * @return User_model
+     * @return array
      */
-    public static function find_user_by_email(string $email): User_model
+    public static function find_user_by_email(string $email): array
     {
-        //TODO
+		return App::get_s()->from(self::CLASS_TABLE)->where(['email' => $email])->select()->one();
     }
 
     /**
@@ -403,6 +468,8 @@ class User_model extends Emerald_model {
                 return self::_preparation_main_page($data);
             case 'default':
                 return self::_preparation_default($data);
+			case 'balance_show':
+				return self::_preparation_balance_show($data);
             default:
                 throw new Exception('undefined preparation type');
         }
@@ -445,6 +512,8 @@ class User_model extends Emerald_model {
 
             $o->personaname = $data->get_personaname();
             $o->avatarfull = $data->get_avatarfull();
+            $o->likes_balance = $data->get_likes_balance();
+            $o->wallet_balance = $data->get_wallet_balance();
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();
@@ -453,4 +522,26 @@ class User_model extends Emerald_model {
         return $o;
     }
 
+	/**
+	 * @param User_model $data
+	 * @return stdClass
+	 */
+	private static function _preparation_balance_show(User_model $data)
+	{
+		$o = new stdClass();
+
+		if (!$data->is_loaded())
+		{
+			$o->id = NULL;
+		} else {
+
+			$o->likes_balance = $data->get_likes_balance();
+			$o->wallet_balance = $data->get_wallet_balance();
+			$o->wallet_total_refilled = $data->get_wallet_total_refilled();
+			$o->wallet_total_withdrawn = $data->get_wallet_total_withdrawn();
+
+		}
+
+		return $o;
+	}
 }

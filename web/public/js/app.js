@@ -1,5 +1,37 @@
 const STATUS_SUCCESS = 'success';
 const STATUS_ERROR = 'error';
+
+
+Vue.component("tree-item", {
+	template: "#item-template",
+	props: {
+		item: Object
+	},
+	data: function() {
+		return {
+			isOpen: false
+		};
+	},
+	computed: {
+		isFolder: function() {
+			return this.item.reply && this.item.reply.length;
+		}
+	},
+	methods: {
+		toggle: function() {
+			if (this.isFolder) {
+				this.isOpen = !this.isOpen;
+			}
+		},
+		makeFolder: function() {
+			if (!this.isFolder) {
+				this.$emit("make-folder", this.item);
+				this.isOpen = true;
+			}
+		}
+	}
+});
+
 var app = new Vue({
 	el: '#app',
 	data: {
@@ -10,11 +42,14 @@ var app = new Vue({
 		invalidPass: false,
 		invalidSum: false,
 		posts: [],
+		history: [],
+		user_balance: [],
 		addSum: 0,
 		amount: 0,
 		likes: 0,
 		commentText: '',
 		boosterpacks: [],
+		treeData: ''
 	},
 	computed: {
 		test: function () {
@@ -37,6 +72,18 @@ var app = new Vue({
 			})
 	},
 	methods: {
+		makeFolder: function(item) {
+			Vue.set(item, "reply", []);
+			this.addItem(item);
+		},
+		addItem: function(item) {
+			item.children.push({
+				name: "new stuff"
+			});
+		},
+		addReply: function(comentId) {
+			document.querySelector("#addReplyId").value = comentId;
+		},
 		logout: function () {
 			console.log ('logout');
 		},
@@ -71,20 +118,21 @@ var app = new Vue({
 		addComment: function(id) {
 			var self = this;
 			if(self.commentText) {
-
 				var comment = new FormData();
 				comment.append('postId', id);
 				comment.append('commentText', self.commentText);
+				comment.append('replyId', document.querySelector("#addReplyId").value);
 
 				axios.post(
 					'/main_page/comment',
 					comment
-				).then(function () {
-
+				).then(function (response) {
+					document.querySelector("#addReplyId").value = '';
+					self.reloadPost(id);
 				});
 			}
-
 		},
+
 		refill: function () {
 			var self= this;
 			if(self.addSum === 0){
@@ -108,6 +156,7 @@ var app = new Vue({
 				.get('/main_page/get_post/' + id)
 				.then(function (response) {
 					self.post = response.data.post;
+					self.treeData = {'id':0, 'user':{ "id": 0, "personaname": "Coments"}, 'reply': response.data.post.coments};
 					if(self.post){
 						setTimeout(function () {
 							$('#postModal').modal('show');
@@ -115,28 +164,63 @@ var app = new Vue({
 					}
 				})
 		},
+		getHistory: function (id) {
+			var self= this;
+			axios
+				.get('/main_page/get_history/')
+				.then(function (response) {
+					self.history = response.data.history;
+					self.user_balance = response.data.user_balance;
+					console.log(response);
+					if(self.history){
+						setTimeout(function () {
+							$('#historyModal').modal('show');
+						}, 500);
+					}
+				})
+		},
+		reloadPost: function (id) {
+			var self= this;
+			axios
+				.get('/main_page/get_post/' + id)
+				.then(function (response) {
+					self.post = response.data.post;
+					self.treeData = {'id':0, 'user':{ "id": 0, "personaname": "Coments"}, 'reply': response.data.post.coments};
+				})
+		},
 		addLike: function (type, id) {
 			var self = this;
 			const url = '/main_page/like_' + type + '/' + id;
+
 			axios
 				.get(url)
 				.then(function (response) {
-					self.likes = response.data.likes;
+					if(response.data.msg){
+						self.reloadPost(self.post.id);
+					}else{
+						alert('You have no likes left');
+					}
 				})
 
 		},
+
 		buyPack: function (id) {
 			var self= this;
 			var pack = new FormData();
 			pack.append('id', id);
 			axios.post('/main_page/buy_boosterpack', pack)
 				.then(function (response) {
-					self.amount = response.data.amount
-					if(self.amount !== 0){
-						setTimeout(function () {
-							$('#amountModal').modal('show');
-						}, 500);
+					if(response.data.amount){
+						self.amount = response.data.amount
+						if(self.amount !== 0){
+							setTimeout(function () {
+								$('#amountModal').modal('show');
+							}, 500);
+						}
+					}else {
+						alert('There is no balance in the account or another error');
 					}
+
 				})
 		}
 	}

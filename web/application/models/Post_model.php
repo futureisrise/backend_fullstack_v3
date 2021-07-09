@@ -147,12 +147,14 @@ class Post_model extends Emerald_Model
     // generated
 
     /**
+	 * @param $post_id int
+	 *
      * @return Comment_model[]
      */
-    public function get_comments():array
+    public function get_comments(int $post_id):array
     {
-       //TODO
-    }
+		return Comment_model::get_all_by_assign_id($post_id);
+	}
 
     /**
      * @return User_model
@@ -207,20 +209,43 @@ class Post_model extends Emerald_Model
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
+	/**
+	 * @return Post_model
+	 * @throws Exception
+	 */
+	public static function get_post(int $post_id):Post_model
+	{
+		return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where('id',  $post_id)->one());
+	}
+
     /**
      * @param User_model $user
      *
      * @return bool
      * @throws Exception
      */
-    public function increment_likes(User_model $user): bool
+    public function increment_likes(User_model $user)
     {
-        //TODO
-    }
+		if($user->likes_check() && $user->decrement_likes()){
+			App::get_s()->from(self::get_table())
+				->where(['id' => $this->get_id()])
+				->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+				->execute();
+
+			if ( ! App::get_s()->is_affected())
+			{
+				return FALSE;
+			}
+			return TRUE;
+
+		}
+
+		return FALSE;
+	}
 
 
     /**
-     * @param Post_model $data
+     * @param Post_model|Post_model[] $data
      * @param string $preparation
      * @return stdClass
      * @throws Exception
@@ -273,7 +298,7 @@ class Post_model extends Emerald_Model
         $o->img = $data->get_img();
 
         $o->user = User_model::preparation($data->get_user(),'main_page');
-        $o->coments = Comment_model::preparation_many($data->get_comments(),'default');
+        $o->coments = Comment_model::preparation_many($data->get_comments($data->get_id()),'default');
 
         $o->likes = $data->get_likes();
 
