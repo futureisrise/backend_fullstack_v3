@@ -15,6 +15,10 @@ var app = new Vue({
 		likes: 0,
 		commentText: '',
 		boosterpacks: [],
+		invalidLoginForm : {
+			message : '',
+			hasError : false
+		}
 	},
 	computed: {
 		test: function () {
@@ -59,12 +63,20 @@ var app = new Vue({
 
 				axios.post('/main_page/login', form)
 					.then(function (response) {
+						if (response.data.status !== "success") {
+							self.invalidLoginForm.message = response.data.error_message;
+							self.invalidLoginForm.hasError = true;
+						}
 						if(response.data.user) {
 							location.reload();
 						}
+
+						/*
 						setTimeout(function () {
 							$('#loginModal').modal('hide');
 						}, 500);
+						*/
+						
 					})
 			}
 		},

@@ -346,7 +346,12 @@ class User_model extends Emerald_model {
      */
     public static function find_user_by_email(string $email): User_model
     {
-        //TODO
+        $result = App::get_s()->from(self::CLASS_TABLE)
+            ->where(['email' => $email])
+            ->select()
+            ->one();
+
+        return ($result)? self::transform_one($result):NULL;
     }
 
     /**

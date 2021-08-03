@@ -3,6 +3,7 @@
 use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
+use Model\Login_model;
 
 /**
  * Created by PhpStorm.
@@ -63,14 +64,38 @@ class Main_page extends MY_Controller
     public function login()
     {
         //TODO
+        if ( User_model::is_logged())
+        {
+            return $this->response_success();
+        }
+        $email = App::get_ci()->input->post("login");
+        $password = App::get_ci()->input->post('password');
 
-        return $this->response_success();
+        if (empty($email) || empty($password)) {
+            return $this->response_error("Login or Password can't be empty");
+        }
+
+        try {
+            $user = Login_model::login($email, $password);
+        } catch (Exception $exception) {
+            return $this->response_error($exception->getMessage());
+        }
+
+        return $this->response_success(['user' => $user->get_id()]);
     }
 
 
     public function logout()
     {
         //TODO
+        if (!User_model::is_logged())
+        {
+            return $this->response_success();
+        }
+
+        Login_model::logout();
+        App::get_ci()->load->helper('url');
+        redirect(site_url());
     }
 
     public function add_money(){

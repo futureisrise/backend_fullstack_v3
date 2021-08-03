@@ -129,6 +129,9 @@ use Model\User_model;
         </div>
         <div class="modal-body">
           <form>
+              <div class="alert alert-danger" role="alert" v-if="invalidLoginForm.hasError">
+                    {{invalidLoginForm.message}}
+              </div>
             <div class="form-group">
               <label for="exampleInputEmail1">Please enter login</label>
               <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" v-model="login" required>

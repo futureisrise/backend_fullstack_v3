@@ -986,7 +986,7 @@ class Sparrow {
                         $db['username'],
                         $db['password'],
                         $db['database'],
-                        $db['port'],
+                        $db['port']
                     );
 
                     if ($this->db->connect_error)
