@@ -22,6 +22,10 @@ var app = new Vue({
 		invalidCommentForm : {
 			message : '',
 			hasError : false
+		},
+		invalidBalance : {
+			message : '',
+			hasError : false
 		}
 	},
 	computed: {
@@ -121,6 +125,9 @@ var app = new Vue({
 		},
 		refill: function () {
 			var self= this;
+			if(self.invalidBalance){
+				self.invalidBalance.hasError = false;
+			}
 			if(self.addSum === 0){
 				self.invalidSum = true
 			}
@@ -130,9 +137,17 @@ var app = new Vue({
 				sum.append('sum', self.addSum);
 				axios.post('/main_page/add_money', sum)
 					.then(function (response) {
-						setTimeout(function () {
-							$('#addModal').modal('hide');
-						}, 500);
+						if (response.data.status !== "success") {
+							self.invalidBalance.message = response.data.error_message;
+							self.invalidBalance.hasError = true;
+						}
+						
+						if (response.data.status == "success") {
+							//havent thinks now about that 
+							setTimeout(function () {
+								$('#addModal').modal('hide');
+							}, 500);
+						}
 					})
 			}
 		},

@@ -265,10 +265,11 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function add_money(float $sum): bool
+    public function add_money(float $sum, User_model $user): bool
     {
         //TODO добавление денег
-
+        $user->set_wallet_balance($user->get_wallet_balance()+$sum);
+        $user->set_wallet_total_refilled($user->get_wallet_total_refilled()+$sum);
         return TRUE;
     }
 
@@ -428,7 +429,8 @@ class User_model extends Emerald_model {
 
         $o->time_created = $data->get_time_created();
         $o->time_updated = $data->get_time_updated();
-
+        $o->likes_balance = $data->get_likes_balance();
+        $o->wallet_balance = $data->get_wallet_balance();
 
         return $o;
     }

@@ -140,6 +140,17 @@ class Main_page extends MY_Controller
         $sum = (float)App::get_ci()->input->post('sum');
 
         //TODO логика добавления денег
+        // for now without transactions and other checks 
+        if($sum <= 0){
+            return $this->response_error("Pls send summ more then 0.");
+        }
+
+        $user = User_model::get_user();
+        if(!$user->add_money($sum, $user)){
+            return $this->response_error("Something wrong when thy set balance.");
+        }
+
+        return $this->response_success();
     }
 
     public function buy_boosterpack()

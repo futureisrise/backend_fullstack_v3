@@ -236,6 +236,9 @@ use Model\User_model;
             <div class="form-group">
               <label for="exampleInputEmail1">Enter sum</label>
               <input type="text" class="form-control" id="addBalance" v-model="addSum" required>
+              <div class="alert alert-danger" role="alert" v-if="invalidBalance.hasError">
+                    {{invalidBalance.message}}
+              </div>
               <div class="invalid-feedback" v-if="invalidSum">
                 Please write a sum.
               </div>
