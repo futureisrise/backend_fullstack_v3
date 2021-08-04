@@ -167,6 +167,23 @@ class Main_page extends MY_Controller
         }
 
         //TODO логика like comment(remove like у юзерa, добавить лай к комменту)
+        $user = User_model::get_user();
+        if (!$user || $user->get_likes_balance() < 1) {
+            return $this->response_error("User haven't like points in balance");
+        }
+
+        //maybe in future have better way
+        $comment = Comment_model::get_comment($comment_id);
+        if (!$comment) {
+            return $this->response_error("Wrong comment ID");
+        }
+
+        if($user->decrement_likes()){
+            if($comment->increment_likes($comment_id)){
+                //beter will get all post again 
+                return $this->get_post($comment->get_assing_id());
+            }
+        }
     }
 
     /**
@@ -183,6 +200,25 @@ class Main_page extends MY_Controller
         }
 
         //TODO логика like post(remove like у юзерa, добавить лай к посту)
+
+        $user = User_model::get_user();
+        if (!$user || $user->get_likes_balance() < 1) {
+            return $this->response_error("User haven't like points in balance");
+        }
+
+        //maybe in future have better way
+        $post = new Post_model($post_id);
+        if (!$post) {
+            // here this  or can be ->response_error
+            throw new Exception("Wrong post ID");
+        }
+
+        if($user->decrement_likes()){
+            if($post->increment_likes($post_id)){
+                //beter will get all post again 
+                return $this->get_post($post_id);
+            }
+        }
     }
 
 

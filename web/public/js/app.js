@@ -154,11 +154,23 @@ var app = new Vue({
 		},
 		addLike: function (type, id) {
 			var self = this;
+			if(self.invalidCommentForm){
+				self.invalidCommentForm.hasError = false;
+			}
 			const url = '/main_page/like_' + type + '/' + id;
 			axios
 				.get(url)
 				.then(function (response) {
-					self.likes = response.data.likes;
+					if (response.data.status !== "success") {
+						// or can ass new section in template || can allert message 
+						self.invalidCommentForm.message = response.data.error_message;
+						self.invalidCommentForm.hasError = true;
+					}
+
+					if (response.data.status == "success") {
+						self.post = response.data.post;
+						//self.likes = response.data.likes;
+					}
 				})
 
 		},

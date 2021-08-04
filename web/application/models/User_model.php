@@ -453,6 +453,7 @@ class User_model extends Emerald_model {
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();
+            $o->likes_balance = $data->get_likes_balance();
         }
 
         return $o;
