@@ -4,7 +4,7 @@ use Model\Boosterpack_model;
 use Model\Post_model;
 use Model\User_model;
 use Model\Login_model;
-
+use Model\Comment_model;
 /**
  * Created by PhpStorm.
  * User: mr.incognito
@@ -47,6 +47,13 @@ class Main_page extends MY_Controller
     public function get_post(int $post_id){
 
         //TODO получения поста по id
+        $post_model = new Post_model($post_id);
+        if (!$post_model) {
+            throw new Exception("Post not found");
+        }
+
+        $post = Post_model::preparation($post_model, 'full_info');        
+        return $this->response_success(['post' => $post]);
     }
 
 
@@ -58,6 +65,32 @@ class Main_page extends MY_Controller
         }
 
         //TODO логика комментирования поста
+        $post_id = App::get_ci()->input->post("postId");
+        $post_model = new Post_model($post_id);
+        if (!$post_id || !$post_model->get_id()) {
+            return $this->response_error("Invalid post id");
+        }
+
+        $data = [
+            'assign_id' => $post_id,
+            'user_id' => User_model::get_session_id(),
+            'reply_id' => NULL,
+            'text' => htmlspecialchars(stripslashes(App::get_ci()->input->post('commentText'))),
+            'likes' => 0            
+        ];
+
+        $res = Comment_model::create($data);
+
+        if (!$res) {
+            return $this->response_error("Can't create comment");
+        }
+
+
+        return $this->response_success([
+            'comments' => Comment_model::preparation_many(Comment_model::get_all_by_assign_id($post_id),'default')
+        ]);
+
+        
     }
 
 

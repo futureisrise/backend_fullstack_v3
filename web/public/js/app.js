@@ -18,6 +18,10 @@ var app = new Vue({
 		invalidLoginForm : {
 			message : '',
 			hasError : false
+		},
+		invalidCommentForm : {
+			message : '',
+			hasError : false
 		}
 	},
 	computed: {
@@ -80,20 +84,38 @@ var app = new Vue({
 					})
 			}
 		},
-		addComment: function(id) {
+		addComment: function(id) {					
 			var self = this;
-			if(self.commentText) {
 
+			if(self.invalidCommentForm){
+				self.invalidCommentForm.hasError = false;
+			}
+
+			if(self.commentText) {				
 				var comment = new FormData();
 				comment.append('postId', id);
 				comment.append('commentText', self.commentText);
-
 				axios.post(
 					'/main_page/comment',
 					comment
-				).then(function () {
+				).then(function (response) {
+					
+					if (response.data.status !== "success") {
+						self.invalidCommentForm.message = response.data.error_message;
+						self.invalidCommentForm.hasError = true;
+					}
+
+					if (response.data.status == "success") {
+						self.post.coments = response.data.comments;
+						//clean form 
+						self.commentText = "";
+					}
 
 				});
+			}
+			else{
+				self.invalidCommentForm.message = 'Pls write your comment text';
+				self.invalidCommentForm.hasError = true;
 			}
 
 		},
@@ -114,11 +136,14 @@ var app = new Vue({
 					})
 			}
 		},
-		openPost: function (id) {
+		openPost: function (id) {			
 			var self= this;
 			axios
 				.get('/main_page/get_post/' + id)
 				.then(function (response) {
+					if(self.invalidCommentForm){
+						self.invalidCommentForm.hasError = false;
+					}
 					self.post = response.data.post;
 					if(self.post){
 						setTimeout(function () {

@@ -202,7 +202,10 @@ use Model\User_model;
                       {{ comment.likes }}
                   </a>
               </p>
-              <form class="form-inline">
+              <div class="alert alert-danger" role="alert" v-if="invalidCommentForm.hasError">
+                      {{invalidCommentForm.message}}
+              </div>
+              <form class="form-inline">                
                 <div class="form-group">
                   <input type="text" class="form-control" id="addComment" v-model="commentText">
                 </div>

@@ -152,6 +152,7 @@ class Post_model extends Emerald_Model
     public function get_comments():array
     {
        //TODO
+       return Comment_model::get_all_by_assign_id($this->get_id());
     }
 
     /**
