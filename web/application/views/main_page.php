@@ -129,6 +129,9 @@ use Model\User_model;
         </div>
         <div class="modal-body">
           <form>
+              <div class="alert alert-danger" role="alert" v-if="invalidLoginForm.hasError">
+                    {{invalidLoginForm.message}}
+              </div>
             <div class="form-group">
               <label for="exampleInputEmail1">Please enter login</label>
               <input type="email" class="form-control" id="inputEmail" aria-describedby="emailHelp" v-model="login" required>
@@ -199,7 +202,10 @@ use Model\User_model;
                       {{ comment.likes }}
                   </a>
               </p>
-              <form class="form-inline">
+              <div class="alert alert-danger" role="alert" v-if="invalidCommentForm.hasError">
+                      {{invalidCommentForm.message}}
+              </div>
+              <form class="form-inline">                
                 <div class="form-group">
                   <input type="text" class="form-control" id="addComment" v-model="commentText">
                 </div>
@@ -230,6 +236,9 @@ use Model\User_model;
             <div class="form-group">
               <label for="exampleInputEmail1">Enter sum</label>
               <input type="text" class="form-control" id="addBalance" v-model="addSum" required>
+              <div class="alert alert-danger" role="alert" v-if="invalidBalance.hasError">
+                    {{invalidBalance.message}}
+              </div>
               <div class="invalid-feedback" v-if="invalidSum">
                 Please write a sum.
               </div>
@@ -254,7 +263,7 @@ use Model\User_model;
           </button>
         </div>
         <div class="modal-body">
-          <h2 class="text-center">Likes: {{amount}}</h2>
+          <h2 class="text-center">You win <br/>Likes: {{amount}}</h2>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>

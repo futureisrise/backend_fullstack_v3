@@ -186,6 +186,30 @@ class Boosterpack_model extends Emerald_model
         //TODO
     }
 
+    /**
+     *
+     * @return int
+     */
+    public function get_max_available_likes(): int
+    {
+        $max_available_likes = $this->price - $this->us + $this->bank;
+        // hack - user cant get less 1 like when buy pack
+        $max_available_likes = ((int)$max_available_likes > 1)? floor($max_available_likes):1;
+        return $max_available_likes;
+    }
+
+
+    /**
+     * @param int $likes
+     * @return int
+     */
+    public function get_new_bank(int $likes): int
+    {
+        $new_bank = $this->bank + $this->price - $this->us - $likes;
+        return ($new_bank > 0)? (int) $new_bank : 0;
+    }    
+
+
 
     /**
      * @param Boosterpack_model $data

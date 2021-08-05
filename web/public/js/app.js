@@ -15,6 +15,18 @@ var app = new Vue({
 		likes: 0,
 		commentText: '',
 		boosterpacks: [],
+		invalidLoginForm : {
+			message : '',
+			hasError : false
+		},
+		invalidCommentForm : {
+			message : '',
+			hasError : false
+		},
+		invalidBalance : {
+			message : '',
+			hasError : false
+		}
 	},
 	computed: {
 		test: function () {
@@ -59,34 +71,63 @@ var app = new Vue({
 
 				axios.post('/main_page/login', form)
 					.then(function (response) {
+						if (response.data.status !== "success") {
+							self.invalidLoginForm.message = response.data.error_message;
+							self.invalidLoginForm.hasError = true;
+						}
 						if(response.data.user) {
 							location.reload();
 						}
+
+						/*
 						setTimeout(function () {
 							$('#loginModal').modal('hide');
 						}, 500);
+						*/
+						
 					})
 			}
 		},
-		addComment: function(id) {
+		addComment: function(id) {					
 			var self = this;
-			if(self.commentText) {
 
+			if(self.invalidCommentForm){
+				self.invalidCommentForm.hasError = false;
+			}
+
+			if(self.commentText) {				
 				var comment = new FormData();
 				comment.append('postId', id);
 				comment.append('commentText', self.commentText);
-
 				axios.post(
 					'/main_page/comment',
 					comment
-				).then(function () {
+				).then(function (response) {
+					
+					if (response.data.status !== "success") {
+						self.invalidCommentForm.message = response.data.error_message;
+						self.invalidCommentForm.hasError = true;
+					}
+
+					if (response.data.status == "success") {
+						self.post.coments = response.data.comments;
+						//clean form 
+						self.commentText = "";
+					}
 
 				});
+			}
+			else{
+				self.invalidCommentForm.message = 'Pls write your comment text';
+				self.invalidCommentForm.hasError = true;
 			}
 
 		},
 		refill: function () {
 			var self= this;
+			if(self.invalidBalance){
+				self.invalidBalance.hasError = false;
+			}
 			if(self.addSum === 0){
 				self.invalidSum = true
 			}
@@ -96,17 +137,28 @@ var app = new Vue({
 				sum.append('sum', self.addSum);
 				axios.post('/main_page/add_money', sum)
 					.then(function (response) {
-						setTimeout(function () {
-							$('#addModal').modal('hide');
-						}, 500);
+						if (response.data.status !== "success") {
+							self.invalidBalance.message = response.data.error_message;
+							self.invalidBalance.hasError = true;
+						}
+						
+						if (response.data.status == "success") {
+							//havent thinks now about that 
+							setTimeout(function () {
+								$('#addModal').modal('hide');
+							}, 500);
+						}
 					})
 			}
 		},
-		openPost: function (id) {
+		openPost: function (id) {			
 			var self= this;
 			axios
 				.get('/main_page/get_post/' + id)
 				.then(function (response) {
+					if(self.invalidCommentForm){
+						self.invalidCommentForm.hasError = false;
+					}
 					self.post = response.data.post;
 					if(self.post){
 						setTimeout(function () {
@@ -117,11 +169,23 @@ var app = new Vue({
 		},
 		addLike: function (type, id) {
 			var self = this;
+			if(self.invalidCommentForm){
+				self.invalidCommentForm.hasError = false;
+			}
 			const url = '/main_page/like_' + type + '/' + id;
 			axios
 				.get(url)
 				.then(function (response) {
-					self.likes = response.data.likes;
+					if (response.data.status !== "success") {
+						// or can ass new section in template || can allert message 
+						self.invalidCommentForm.message = response.data.error_message;
+						self.invalidCommentForm.hasError = true;
+					}
+
+					if (response.data.status == "success") {
+						self.post = response.data.post;
+						//self.likes = response.data.likes;
+					}
 				})
 
 		},

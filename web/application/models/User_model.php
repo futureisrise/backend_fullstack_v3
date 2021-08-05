@@ -265,10 +265,11 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function add_money(float $sum): bool
+    public function add_money(float $sum, User_model $user): bool
     {
         //TODO добавление денег
-
+        $user->set_wallet_balance($user->get_wallet_balance()+$sum);
+        $user->set_wallet_total_refilled($user->get_wallet_total_refilled()+$sum);
         return TRUE;
     }
 
@@ -282,8 +283,15 @@ class User_model extends Emerald_model {
     public function remove_money(float $sum): bool
     {
         //TODO списание денег
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update([
+                'wallet_balance' => $this->get_wallet_balance() - $sum,
+                'wallet_total_withdrawn' => $this->get_wallet_total_withdrawn() + $sum,
+            ])
+            ->execute();
 
-        return TRUE;
+        return ( App::get_s()->is_affected()) ? TRUE : FALSE;
     }
 
     /**
@@ -303,6 +311,21 @@ class User_model extends Emerald_model {
         }
 
         return TRUE;
+    }
+
+    /**
+     * @param int $add_likes
+     * @return bool
+     * @throws Exception
+     */
+    public function increment_likes(int $add_likes): bool
+    {
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('likes_balance = likes_balance + %s', $add_likes))
+            ->execute();
+
+        return ( App::get_s()->is_affected()) ? TRUE : FALSE;
     }
 
     /**
@@ -346,7 +369,12 @@ class User_model extends Emerald_model {
      */
     public static function find_user_by_email(string $email): User_model
     {
-        //TODO
+        $result = App::get_s()->from(self::CLASS_TABLE)
+            ->where(['email' => $email])
+            ->select()
+            ->one();
+
+        return ($result)? self::transform_one($result):NULL;
     }
 
     /**
@@ -423,7 +451,8 @@ class User_model extends Emerald_model {
 
         $o->time_created = $data->get_time_created();
         $o->time_updated = $data->get_time_updated();
-
+        $o->likes_balance = $data->get_likes_balance();
+        $o->wallet_balance = $data->get_wallet_balance();
 
         return $o;
     }
@@ -448,6 +477,7 @@ class User_model extends Emerald_model {
 
             $o->time_created = $data->get_time_created();
             $o->time_updated = $data->get_time_updated();
+            $o->likes_balance = $data->get_likes_balance();
         }
 
         return $o;
