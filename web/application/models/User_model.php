@@ -283,8 +283,15 @@ class User_model extends Emerald_model {
     public function remove_money(float $sum): bool
     {
         //TODO списание денег
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update([
+                'wallet_balance' => $this->get_wallet_balance() - $sum,
+                'wallet_total_withdrawn' => $this->get_wallet_total_withdrawn() + $sum,
+            ])
+            ->execute();
 
-        return TRUE;
+        return ( App::get_s()->is_affected()) ? TRUE : FALSE;
     }
 
     /**
@@ -304,6 +311,21 @@ class User_model extends Emerald_model {
         }
 
         return TRUE;
+    }
+
+    /**
+     * @param int $add_likes
+     * @return bool
+     * @throws Exception
+     */
+    public function increment_likes(int $add_likes): bool
+    {
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('likes_balance = likes_balance + %s', $add_likes))
+            ->execute();
+
+        return ( App::get_s()->is_affected()) ? TRUE : FALSE;
     }
 
     /**

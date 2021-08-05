@@ -263,7 +263,7 @@ use Model\User_model;
           </button>
         </div>
         <div class="modal-body">
-          <h2 class="text-center">Likes: {{amount}}</h2>
+          <h2 class="text-center">You win <br/>Likes: {{amount}}</h2>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>

@@ -162,6 +162,40 @@ class Main_page extends MY_Controller
         }
 
         //TODO логика покупки и открытия бустерпака по алгоритмку профитбанк, как описано в ТЗ
+        $pack_id = (int)App::get_ci()->input->post('id');
+        $pack_model = new Boosterpack_model($pack_id);
+        $user_model = User_model::get_user();
+
+        if (!$pack_model) {
+            throw new Exception("Invalid Boosterpack");
+        }
+
+        if($user_model->get_wallet_balance() < $pack_model->get_price()){
+            throw new Exception("User have not money to buy this Boosterpack.");
+        }
+
+        $max_likes = $pack_model->get_max_available_likes();
+        $user_rand_likes = rand(1, $max_likes);
+
+
+        // in future need transaction
+        //update user wallet
+        if(!$user_model->remove_money($pack_model->get_price())){
+            throw new Exception("Error: cant update wallet balance");
+        }
+
+        //update boosterpack bank
+        if(!$pack_model->set_bank($pack_model->get_new_bank($user_rand_likes))){
+            throw new Exception("Error: cant update Boosterpack Bank");
+        }
+
+        //update user likes balance
+        if(!$user_model->increment_likes($user_rand_likes)){
+            throw new Exception("Error: cant add likes for User");
+        }
+
+        //return user get likes
+        return $this->response_success(['amount' => $user_rand_likes]);
     }
 
 
