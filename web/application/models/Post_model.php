@@ -152,6 +152,9 @@ class Post_model extends Emerald_Model
     public function get_comments():array
     {
        //TODO
+       $comment = Comment_model::get_all($this->get_id());
+    //   $comment = Comment_model::get_all_by_assign_id($this->get_id());
+       return $comment;
     }
 
     /**
@@ -207,6 +210,14 @@ class Post_model extends Emerald_Model
         return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->many());
     }
 
+    public static function get_post(int $id):Post_model
+    {
+        if(!App::get_s()->from(self::CLASS_TABLE)->where(['id' => $id])->one()){
+            throw new Exception('Post not found');
+        }
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where(['id' => $id])->one());
+    }
+
     /**
      * @param User_model $user
      *
@@ -216,6 +227,18 @@ class Post_model extends Emerald_Model
     public function increment_likes(User_model $user): bool
     {
         //TODO
+        App::get_s()->from(self::CLASS_TABLE)
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('likes = likes + %s', App::get_s()->quote(1)))
+            ->execute();
+            
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+        
+        return TRUE;
+        
     }
 
 

@@ -27,7 +27,14 @@ class Login_model extends CI_Model {
     {
         //TODO
 
-        self::start_session();
+        $user = User_model::find_user_by_email(App::get_ci()->input->post('login'));
+        if (App::get_ci()->input->post('password')==$user->get_password()) {
+            self::start_session($user->get_id());
+            return $user;
+        } else {
+            throw new Exception('Login or Password is incorrect');
+        }
+        
     }
 
     public static function start_session(int $user_id)

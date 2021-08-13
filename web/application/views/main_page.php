@@ -17,6 +17,7 @@ use Model\User_model;
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
+
 <div id="app">
   <div class="header">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -26,29 +27,40 @@ use Model\User_model;
       </button>
       <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
         <li class="nav-item">
-            <? if (User_model::is_logged()) {?>
+            <?php if (User_model::is_logged()) {?>
               <a href="/main_page/logout" class="btn btn-primary my-2 my-sm-0"
                  data-target="#loginModal">Log out, <?= $user->personaname?>
               </a>
-            <? } else {?>
+            <?php } else {?>
               <button type="button" class="btn btn-success my-2 my-sm-0" type="submit" data-toggle="modal"
                       data-target="#loginModal">Log IN
               </button>
-            <? } ?>
+            <?php } ?>
         </li>
         <li class="nav-item">
-            <?  if (User_model::is_logged()) {?>
+            <?php  if (User_model::is_logged()) {?>
               <button type="button" class="btn btn-success my-2 my-sm-0" type="submit" data-toggle="modal"
                       data-target="#addModal">Add balance
               </button>
-            <? }?>
+            <?php }?>
         </li>
         <li class="nav-item">
-            <?  if (User_model::is_logged()) {?>
+            <?php  if (User_model::is_logged()) {?>
                 <a href="" role="button">
                     Likes:
+                    <span v-if="likes_balance<0"><?= $user->likes ?></span>
+                    <span v-else>{{ likes_balance }}</span>
                 </a>
-            <? }?>
+            <?php }?>
+        </li>
+        <li class="nav-item">
+            <?php  if (User_model::is_logged()) { ?>
+                <a href="" role="button">
+                    Balance: $
+                    <span v-if="balance == 0"><?= $user->balance ?></span>
+                    <span v-else>{{ balance }}</span>
+                </a>
+            <?php } ?>
         </li>
       </div>
 <!--      <div class="collapse navbar-collapse" id="navbarTogglerDemo01">-->
@@ -189,21 +201,21 @@ use Model\User_model;
                   <span>{{likes}}</span>
                 </div>
               </div>
-              <p class="card-text" v-for="comment in post.coments">
-                  {{comment.user.personaname + ' - '}}
-                  <small class="text-muted">{{comment.text}}</small>
-                  <a role="button" @click="addLike('comment', comment.id)">
-                      <svg class="bi bi-heart-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                          <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z" clip-rule="evenodd"/>
-                      </svg>
-                      {{ comment.likes }}
-                  </a>
-              </p>
+              <hr>
+              
+            <ul v-for="comment in post.coments"> 
+                <comments :model="comment"></comments>
+            </ul>
+            
               <form class="form-inline">
                 <div class="form-group">
                   <input type="text" class="form-control" id="addComment" v-model="commentText">
                 </div>
                 <button type="button" class="btn btn-primary" @click="addComment(post.id)">Add comment</button>
+                <div v-show="reply.id" style="display:block;width:100%;">
+                    <a href="#" @click="unsetReply">Remove</a>
+                    Replying to: {{reply.text}}
+                </div>
               </form>
             </div>
           </div>
