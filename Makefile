@@ -28,28 +28,28 @@ init:
 	@make composer-up
 
 clean:
-	-@docker rm $$(docker stop frozeneon-nginx)
-	-@docker rm $$(docker stop frozeneon-php)
-	-@docker rm $$(docker stop frozeneon-phpmyadmin)
-	-@docker rm $$(docker stop frozeneon-mysql)
-	-@rm -Rf data/db/*
+	-@sudo docker rm $$(docker stop frozeneon-nginx)
+	-@sudo docker rm $$(docker stop frozeneon-php)
+	-@sudo docker rm $$(docker stop frozeneon-phpmyadmin)
+	-@sudo docker rm $$(docker stop frozeneon-mysql)
+	-@sudo rm -Rf data/db/*
 
 composer-up:
-	@docker exec -u root -i -w /var/www/html/application $(docker_php) composer install --prefer-source --no-interaction
+	@sudo docker exec -u root -i -w /var/www/html/application $(docker_php) composer install --prefer-source --no-interaction
 
 docker-start:
-	docker-compose up -d
+	@sudo docker-compose up -d
 
 docker-stop:
-	@docker-compose --env-file .env stop
+	@sudo docker-compose --env-file .env stop
 
 gen-certs:
-	@docker run --rm -v $(shell pwd)/etc/ssl:/certificates -e "SERVER=$(NGINX_HOST)" jacoelho/generate-certificate
+	@sudo docker run --rm -v $(shell pwd)/etc/ssl:/certificates -e "SERVER=$(NGINX_HOST)" jacoelho/generate-certificate
 
 logs:
-	@docker-compose logs -f
+	@sudo docker-compose logs -f
 
 mysql-init:
-	@docker exec -i $(docker_mysql) mysql -u"$(MYSQL_ROOT_USER)" -p"$(MYSQL_ROOT_PASSWORD)" test_task < $(MYSQL_DUMPS_DIR)/init_db.sql
+	@sudo docker exec -i $(docker_mysql) mysql -u"$(MYSQL_ROOT_USER)" -p"$(MYSQL_ROOT_PASSWORD)" test_task < $(MYSQL_DUMPS_DIR)/init_db.sql
 
 .PHONY: clean init help
