@@ -29,6 +29,8 @@ Phinx-миграции в тестовом задании делать не ну
 
 ### Base commands for Unix
 
+**Все команды нужно запускать от имени администратора/root(sudo) или от имени пользователя входящего в docker группу.**
+
 ``make init`` - Initialize docker, pull images, init the db, install composer dependencies.  
 ``make docker-start`` - Start docker  
 ``make docker-stop`` - Stop docker containers  
