@@ -6,6 +6,7 @@ use Exception;
 use http\Client\Curl\User;
 use stdClass;
 use System\Emerald\Emerald_model;
+use Model\Enum\Transaction_types;
 
 /**
  * Created by PhpStorm.
@@ -265,8 +266,24 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function add_money(float $sum): bool
+    public function add_money(float $sum,$type=Transaction_types::INCOME,string $info='',string  $external_id=''): bool
     {
+        $transaction= Transaction_model::create(
+            [
+                'user_id' => $this->get_id(),
+                'type'=>$type,
+                'amount'=>$sum,
+                'external_id'=>$external_id,
+                'info'=>$info,
+            ]
+        );
+        if(!$transaction->get_id())
+        {
+            //todo log to file becouse somethig wron with DB
+        }
+
+
+        $this->update_user_balanse();
         //TODO добавление денег
 
         return TRUE;
@@ -279,11 +296,55 @@ class User_model extends Emerald_model {
      * @return bool
      * @throws \ShadowIgniterException
      */
-    public function remove_money(float $sum): bool
+    public function remove_money(float $sum,$type=Transaction_types::WITHDROW,string $info=''): ?Transaction_model
     {
+        $external_id = 0;
+        $transaction= Transaction_model::create(
+            [
+                'user_id' => $this->get_id(),
+                'type'=>$type,
+                'amount'=>$sum*-1,
+                'external_id'=>$external_id,
+                'info'=>$info,
+            ]
+        );
+        if(!$transaction->get_id())
+        {
+            return null;
+            //todo log to file becouse somethig wron with DB
+        }
+
+        $this->update_user_balanse();
         //TODO списание денег
 
-        return TRUE;
+        return $transaction;
+    }
+
+    public function buy_boosterpack(Boosterpack_model $boosterpack):bool
+    {
+        $this->reload();
+        if($this->get_wallet_balance() < $boosterpack->get_price())
+        {
+            return false;
+        }
+        $transaction = $this->remove_money($boosterpack->get_price(),Transaction_types::BOOSTERPACK,'Buy boosterpack');
+        if(!$transaction)
+        {
+            return false;
+        }
+
+        $boosterpack_info = $boosterpack->open();
+        if(!$boosterpack_info)
+        {
+            return false;
+        }
+        $transactionInfo = $transaction->get_infos()[0];
+
+        $transactionInfo->set_boosterpack_id($boosterpack_info->get_boosterpack_id());
+        $transactionInfo->set_item_id($boosterpack_info->get_item()->get_id());
+        $transactionInfo->set_item_price($boosterpack_info->get_item()->get_price());
+
+        return true;
     }
 
     /**
@@ -346,6 +407,7 @@ class User_model extends Emerald_model {
      */
     public static function find_user_by_email(string $email): User_model
     {
+        return static::transform_one(App::get_s()->from(self::CLASS_TABLE)->where('email', $email)->one());
         //TODO
     }
 
@@ -387,6 +449,28 @@ class User_model extends Emerald_model {
         {
             return new self();
         }
+    }
+
+    /**
+     * Returns current user or empty model
+     *
+     * @return User_model
+     */
+    public function update_user_balanse(): bool
+    {
+        $db = App::get_s();
+        $db->sql(sprintf('UPDATE user set  wallet_balance=(
+                select IFNULL(sum_amount,0) from    (select sum(t.`amount`) as sum_amount from `transaction` as t where t.user_id=%u) as sd
+                ) where id=%s', $db->quote($this->get_id()), $db->quote($this->get_id())))->execute();
+
+        $db->sql(sprintf('UPDATE user set  wallet_total_refilled=(
+                select IFNULL(sum_amount,0) from    (select sum(`amount`) as sum_amount from `transaction` where user_id=%u and amount>0) as sd
+                ) where id=%s', $db->quote($this->get_id()), $db->quote($this->get_id())))->execute();
+        $db->sql(sprintf('UPDATE user set  wallet_total_withdrawn=(
+                select IFNULL(sum_amount,0) from    (select ABS(sum(`amount`)) as sum_amount from `transaction` where user_id=%u and amount<0) as sd
+                ) where id=%s', $db->quote($this->get_id()), $db->quote($this->get_id())))->execute();
+
+        return true;
     }
 
     /**

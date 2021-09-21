@@ -151,6 +151,7 @@ class Post_model extends Emerald_Model
      */
     public function get_comments():array
     {
+        return Comment_model::get_all_by_assign_id($this->get_id());
        //TODO
     }
 
@@ -208,13 +209,23 @@ class Post_model extends Emerald_Model
     }
 
     /**
-     * @param User_model $user
+     * 
      *
      * @return bool
      * @throws Exception
      */
-    public function increment_likes(User_model $user): bool
+    public function increment_likes(): bool
     {
+        App::get_s()->from(self::get_table())
+            ->where(['id' => $this->get_id()])
+            ->update(sprintf('likes = likes +  %s', App::get_s()->quote(1)))
+            ->execute();
+
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+        return TRUE;
         //TODO
     }
 
@@ -273,7 +284,7 @@ class Post_model extends Emerald_Model
         $o->img = $data->get_img();
 
         $o->user = User_model::preparation($data->get_user(),'main_page');
-        $o->coments = Comment_model::preparation_many($data->get_comments(),'default');
+        $o->coments = Comment_model::preparation_many($data->get_comments(),'nested');
 
         $o->likes = $data->get_likes();
 

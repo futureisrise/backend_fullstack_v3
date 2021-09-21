@@ -238,18 +238,28 @@ class Comment_model extends Emerald_Model {
     }
 
     /**
-     * @param User_model $user
+     * 
      *
      * @return bool
      * @throws Exception
      */
-    public function increment_likes(User_model $user): bool
+    public function increment_likes(): bool
     {
+        App::get_s()->from(self::get_table())
+        ->where(['id' => $this->get_id()])
+        ->update(sprintf('likes = likes +  %s,', App::get_s()->quote(1)))
+        ->execute();
+        if ( ! App::get_s()->is_affected())
+        {
+            return FALSE;
+        }
+        return TRUE;
         //TODO
     }
 
     public static function get_all_by_replay_id(int $reply_id)
     {
+        return static::transform_many(App::get_s()->from(self::CLASS_TABLE)->where(['reply_id' => $reply_id])->orderBy('time_created', 'ASC')->many());
         //TODO
     }
 
@@ -290,6 +300,32 @@ class Comment_model extends Emerald_Model {
         $o->time_updated = $data->get_time_updated();
 
         return $o;
+    }
+    public static function preparation_many(array $data, string $preparation = 'default', string $key = NULL): array
+    {
+        $data = parent::preparation_many($data,'default','get_id');
+        switch ($preparation) {
+            case  'nested':
+                for($i=count($data)-1;$i>=0;$i--)
+                {
+                    $parentKey = $data[$i]->reply_id;
+                    if(isset($data[$parentKey])){
+                        if(isset($data[$parentKey]->children))
+                        {
+                            $data[$parentKey]->children[] = $data[$i];
+                        }else{
+                            $data[$parentKey]->children = [];
+                            $data[$parentKey]->children[] = $data[$i];
+                        }
+                        unset($data[$i]);
+                    }
+                }
+
+            return  $data;
+            break;
+            default:
+                return $data;
+        }
     }
 
 }
